@@ -100,8 +100,7 @@ download_wallpapers() {
     
     # Download multiple BlackArch wallpapers
     WALLPAPERS=(
-        "https://raw.githubusercontent.com/BlackArch/blackarch-artwork/master/wallpapers/blackarch-2560x1600.png"
-        "https://raw.githubusercontent.com/BlackArch/blackarch-artwork/master/wallpapers/blackarch-1920x1080.png"
+        "https://raw.githubusercontent.com/BlackArch/blackarch-artwork/blob/master/wallpaper/wallpaper-NINJARCH-code.png"
     )
     
     for url in "${WALLPAPERS[@]}"; do
@@ -177,7 +176,7 @@ configure_lightdm() {
     print_status "Configuring LightDM login screen..."
     
     LIGHTDM_CONF="/etc/lightdm/lightdm-gtk-greeter.conf"
-    WALLPAPER="$REAL_HOME/Pictures/wallpapers/blackarch/blackarch-1920x1080.png"
+    WALLPAPER="$REAL_HOME/Pictures/wallpapers/blackarch/wallpaper-NINJARCH-code.png"
     
     # Fallback if wallpaper doesn't exist
     if [[ ! -f "$WALLPAPER" ]]; then
@@ -211,7 +210,7 @@ configure_openbox() {
     # Openbox autostart
     cat > "$OB_DIR/autostart" << 'EOF'
 # Set wallpaper
-feh --bg-scale ~/Pictures/wallpapers/blackarch/blackarch-1920x1080.png &
+feh --bg-scale ~/Pictures/wallpapers/blackarch/wallpaper-NINJARCH-code.png &
 
 # Compositor for transparency
 picom -b &
@@ -326,7 +325,7 @@ EOF
     # Fluxbox startup
     cat > "$FB_DIR/startup" << 'EOF'
 #!/bin/bash
-feh --bg-scale ~/Pictures/wallpapers/blackarch/blackarch-1920x1080.png &
+feh --bg-scale ~/Pictures/wallpapers/blackarch/wallpaper-NINJARCH-code.png &
 picom -b &
 nm-applet &
 exec fluxbox
