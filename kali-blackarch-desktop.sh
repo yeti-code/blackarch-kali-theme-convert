@@ -85,9 +85,8 @@ install_packages() {
         picom \
         alacritty \
         neofetch \
-        conky \
-        nitrogen \
-        tint2 \
+        conky-std \
+        polybar \
         dunst \
         2>/dev/null || print_warning "Some packages may not be available"
 }
@@ -216,7 +215,7 @@ feh --bg-scale ~/Pictures/wallpapers/blackarch/wallpaper-NINJARCH-code.png &
 picom -b &
 
 # Panel
-tint2 &
+~/.config/polybar/launch.sh &
 
 # Notification daemon
 dunst &
@@ -357,12 +356,37 @@ EOF
     
     # Fluxbox keys
     cat > "$FB_DIR/keys" << 'EOF'
-Mod4 Return :Exec alacritty
+# Super + Enter = Terminal (try alacritty, fallback to x-terminal-emulator)
+Mod4 Return :Exec alacritty || x-terminal-emulator
+Mod4 t :Exec alacritty || x-terminal-emulator
+
+# Super + D = App launcher
 Mod4 d :Exec rofi -show drun
-Mod1 Tab :NextWindow
+
+# Window management
+Mod1 Tab :NextWindow {groups} (workspace=[current])
+Mod1 Shift Tab :PrevWindow {groups} (workspace=[current])
 Mod4 q :Close
 Mod4 m :Maximize
 Mod4 n :Minimize
+Mod4 f :Fullscreen
+
+# Workspace switching
+Mod4 1 :Workspace 1
+Mod4 2 :Workspace 2
+Mod4 3 :Workspace 3
+Mod4 4 :Workspace 4
+
+# Right-click menu
+OnDesktop Mouse3 :RootMenu
+
+# Scroll on desktop to change workspace
+OnDesktop Mouse4 :PrevWorkspace
+OnDesktop Mouse5 :NextWorkspace
+
+# Click on titlebar actions
+OnTitlebar Double Mouse1 :Maximize
+OnTitlebar Mouse3 :WindowMenu
 EOF
     
     chown -R "$REAL_USER:$REAL_USER" "$FB_DIR"
@@ -520,70 +544,127 @@ EOF
     chown -R "$REAL_USER:$REAL_USER" "$ROFI_DIR"
 }
 
-configure_tint2() {
-    print_status "Configuring Tint2 panel..."
+configure_polybar() {
+    print_status "Configuring Polybar panel..."
     
-    TINT2_DIR="$REAL_HOME/.config/tint2"
-    mkdir -p "$TINT2_DIR"
+    POLYBAR_DIR="$REAL_HOME/.config/polybar"
+    mkdir -p "$POLYBAR_DIR"
     
-    cat > "$TINT2_DIR/tint2rc" << 'EOF'
-# Panel
-panel_items = LTSC
-panel_size = 100% 30
-panel_margin = 0 0
-panel_padding = 5 0 5
-panel_background_id = 1
-panel_position = bottom center horizontal
+    cat > "$POLYBAR_DIR/config.ini" << 'EOF'
+[colors]
+background = #0d0d0d
+background-alt = #1a1a1a
+foreground = #ffffff
+primary = #ff0000
+secondary = #666666
+alert = #ff0000
+disabled = #4d4d4d
 
-# Background definitions
-rounded = 0
-border_width = 0
-border_sides = 
-background_color = #0d0d0d 90
-border_color = #ff0000 100
+[bar/blackarch]
+width = 100%
+height = 24pt
+radius = 0
+background = ${colors.background}
+foreground = ${colors.foreground}
+line-size = 2pt
+border-size = 0pt
+border-color = #00000000
+padding-left = 1
+padding-right = 1
+module-margin = 1
+separator = |
+separator-foreground = ${colors.disabled}
+font-0 = "Sans:size=10;2"
+font-1 = "Sans:size=10:weight=bold;2"
+modules-left = xworkspaces
+modules-center = date
+modules-right = pulseaudio memory cpu wlan eth tray
+cursor-click = pointer
+cursor-scroll = ns-resize
+enable-ipc = true
 
-# Taskbar
-taskbar_mode = single_desktop
-taskbar_padding = 0 0 5
-taskbar_background_id = 0
+[module/tray]
+type = internal/tray
+tray-spacing = 8pt
 
-# Task
-task_icon = 1
-task_text = 1
-task_centered = 1
-task_maximum_size = 200 30
-task_padding = 5 2 5
-task_font = Sans 10
-task_font_color = #ffffff 100
-task_active_font_color = #ff0000 100
-task_background_id = 0
-task_active_background_id = 0
+[module/xworkspaces]
+type = internal/xworkspaces
+label-active = %name%
+label-active-background = ${colors.background-alt}
+label-active-underline= ${colors.primary}
+label-active-padding = 1
+label-occupied = %name%
+label-occupied-padding = 1
+label-urgent = %name%
+label-urgent-background = ${colors.alert}
+label-urgent-padding = 1
+label-empty = %name%
+label-empty-foreground = ${colors.disabled}
+label-empty-padding = 1
 
-# System tray
-systray_padding = 5 2 5
-systray_background_id = 0
-systray_icon_size = 20
-systray_icon_asb = 100 0 0
+[module/pulseaudio]
+type = internal/pulseaudio
+format-volume-prefix = "VOL "
+format-volume-prefix-foreground = ${colors.primary}
+format-volume = <label-volume>
+label-volume = %percentage%%
+label-muted = muted
+label-muted-foreground = ${colors.disabled}
 
-# Clock
-time1_format = %H:%M
-time1_font = Sans Bold 10
-time2_format = %Y-%m-%d
-time2_font = Sans 8
-clock_font_color = #ff0000 100
-clock_padding = 10 0
-clock_background_id = 0
+[module/memory]
+type = internal/memory
+interval = 2
+format-prefix = "RAM "
+format-prefix-foreground = ${colors.primary}
+label = %percentage_used:2%%
 
-# Launcher
-launcher_padding = 5 0 5
-launcher_background_id = 0
-launcher_icon_size = 24
-launcher_item_app = /usr/share/applications/alacritty.desktop
-launcher_item_app = /usr/share/applications/firefox-esr.desktop
-launcher_item_app = /usr/share/applications/thunar.desktop
+[module/cpu]
+type = internal/cpu
+interval = 2
+format-prefix = "CPU "
+format-prefix-foreground = ${colors.primary}
+label = %percentage:2%%
+
+[module/wlan]
+type = internal/network
+interface-type = wireless
+interval = 5
+format-connected = <label-connected>
+label-connected = %{F#ff0000}WLAN%{F-} %essid%
+format-disconnected =
+label-disconnected =
+
+[module/eth]
+type = internal/network
+interface-type = wired
+interval = 5
+format-connected = <label-connected>
+label-connected = %{F#ff0000}ETH%{F-} %local_ip%
+format-disconnected =
+label-disconnected =
+
+[module/date]
+type = internal/date
+interval = 1
+date = %Y-%m-%d %H:%M:%S
+label = %date%
+label-foreground = ${colors.primary}
+
+[settings]
+screenchange-reload = true
+pseudo-transparency = true
 EOF
+
+    # Polybar launch script
+    cat > "$POLYBAR_DIR/launch.sh" << 'EOF'
+#!/bin/bash
+killall -q polybar
+while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
+polybar blackarch 2>&1 | tee -a /tmp/polybar.log & disown
+EOF
+    chmod +x "$POLYBAR_DIR/launch.sh"
     
-    chown -R "$REAL_USER:$REAL_USER" "$TINT2_DIR"
+    chown -R "$REAL_USER:$REAL_USER" "$POLYBAR_DIR"
 }
 
 configure_bash() {
@@ -925,7 +1006,7 @@ main() {
     configure_fluxbox
     configure_alacritty
     configure_rofi
-    configure_tint2
+    configure_polybar
     configure_bash
     configure_neofetch
     configure_picom
