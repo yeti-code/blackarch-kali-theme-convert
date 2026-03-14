@@ -100,7 +100,7 @@ download_wallpapers() {
     
     # Download multiple BlackArch wallpapers
     WALLPAPERS=(
-        "https://raw.githubusercontent.com/BlackArch/blackarch-artwork/blob/master/wallpaper/wallpaper-NINJARCH-code.png"
+        "https://raw.githubusercontent.com/BlackArch/blackarch-artwork/master/wallpaper/wallpaper-NINJARCH-code.png"
     )
     
     for url in "${WALLPAPERS[@]}"; do
